@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import { assets } from '../assets/assets';
 
@@ -107,7 +108,7 @@ export const generateBillPDF = (bill) => {
     { title: 'SL NO', x: 20, width: 13 },
     { title: 'ITEM DESCRIPTION', x: 33, width: 47 },
     { title: 'HSN', x: 80, width: 15 },
-    { title: 'UNIT', x: 95, width: 15 },
+    { title: 'QTY', x: 95, width: 15 },
     { title: 'RATE', x: 110, width: 15 },
     { title: 'GST', x: 125, width: 15 },
     { title: 'CGST', x: 140, width: 15 },
@@ -128,44 +129,51 @@ export const generateBillPDF = (bill) => {
   
   let grandTotal = 0;
 
-  if (bill.additionalItems && bill.additionalItems.length > 0) {
-    bill.additionalItems.forEach((item, index) => {
-      const descriptionWrapped = wrapText(pdf, item.name || '', columns[1].width - 3);
-      const rowHeight = Math.max(8, getTextHeight(pdf, descriptionWrapped) + 2);
+ bill.additionalItems.forEach((item, index) => {
+  const descriptionWrapped = wrapText(pdf, item.name || '', columns[1].width - 2);
+  const rowHeight = Math.max(10, getTextHeight(pdf, descriptionWrapped) + 4);
 
-      if (y + rowHeight > 270) {
-        pdf.addPage();
-        y = 20;
-      }
-
-      const values = [
-        item.sno.toString(),
-        item.name,
-        item.hsn,
-        item.units.toString() + item.quantityType.toString(),
-        `${item.price}`,
-        item.gst && item.gst !== '0' ? `${item.gst}%` : '-',
-        item.cgst && item.cgst !== '0.00' ? `${item.cgst}` : '-',
-        item.sgst && item.sgst !== '0.00' ? `${item.sgst}` : '-',
-        `${item.totalAmount}`,
-      ];
-
-      columns.forEach((col, i) => {
-        pdf.rect(col.x, y, col.width, rowHeight);
-        if (i === 1) {
-          const lines = wrapText(pdf, values[i], col.width - 2);
-          lines.forEach((line, idx) => {
-            pdf.text(line, col.x + 1.5, y + 5 + idx * 4);
-          });
-        } else {
-          pdf.text(values[i], col.x + 1.5, y + 6);
-        }
-      });
-
-      grandTotal += parseFloat(item.totalAmount) || 0;
-      y += rowHeight;
-    });
+  if (y + rowHeight > 270) {
+    pdf.addPage();
+    y = 20;
   }
+
+  const values = [
+    item.sno.toString(),
+    item.name,
+    item.hsn,
+    item.units.toString() + item.quantityType.toString(),
+    `${item.price}`,
+    item.gst && item.gst !== '0' ? `${item.gst}%` : '-',
+    item.cgst && item.cgst !== '0.00' ? `${item.cgst}` : '-',
+    item.sgst && item.sgst !== '0.00' ? `${item.sgst}` : '-',
+    `${item.totalAmount}`,
+  ];
+
+  columns.forEach((col, i) => {
+    pdf.rect(col.x, y, col.width, rowHeight);
+
+    // ITEM DESCRIPTION
+    if (i === 1) {
+      pdf.setFontSize(12);
+      const lines = wrapText(pdf, values[i], col.width - 2);
+      const startY = y + (rowHeight - lines.length * 4) / 2;
+      lines.forEach((line, idx) => {
+        pdf.text(line, col.x + 2, startY + idx * 4 + 3);
+      });
+      pdf.setFontSize(9);
+    } else {
+      // Vertically centered text
+      const text = values[i];
+      const textY = y + rowHeight / 2 + 2;
+      pdf.text(text, col.x + 1.5, textY);
+    }
+  });
+
+  grandTotal += parseFloat(item.totalAmount) || 0;
+  y += rowHeight;
+});
+
 
   // Grand Total Row
   const totalRowHeight = 8;
