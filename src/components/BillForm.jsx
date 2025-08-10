@@ -629,19 +629,19 @@ const BillForm = ({ onBillSaved }) => {
                   let newText = "";
 
                   lines.forEach((line, lineIndex) => {
-                    if (line.length > 20) {
+                    if (line.length > 18) {
                       let words = line.split(" ");
                       let currentLine = "";
 
                       words.forEach((word, wordIndex) => {
-                        if ((currentLine + word).length > 20) {
+                        if ((currentLine + word).length > 18) {
                           if (currentLine.trim() !== "") {
                             newText += currentLine.trim() + "\n";
                           }
 
-                          while (word.length > 20) {
-                            newText += word.substring(0, 20) + "\n";
-                            word = word.substring(20);
+                          while (word.length > 18) {
+                            newText += word.substring(0, 18) + "\n";
+                            word = word.substring(18);
                           }
                           currentLine = word + " ";
                         } else {
