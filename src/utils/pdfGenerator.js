@@ -152,7 +152,7 @@ export const generateBillPDF = (bill) => {
     const rowHeight = Math.max(10, getTextHeight(descriptionWrapped) + 4);
 
     // Page break check
-    if (y + rowHeight > 270) {
+    if (y + rowHeight > 230) {
       pdf.addPage();
       y = drawTableHeader(pdf, columns, 20);
     }

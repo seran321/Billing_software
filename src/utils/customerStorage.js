@@ -2,8 +2,10 @@
  * @typedef {Object} SavedCustomer
  * @property {string} id - Unique identifier for the customer
  * @property {string} customer - Customer name
- * @property {string} date - Customer date
- * @property {string} invoice - invoice
+ * @property {string} city - City name
+ * @property {string} state - State name
+ * @property {string} gstno - GST_NO
+
  * @property {string} address - Customer address
  * @property {string} createdAt - Creation timestamp
  */

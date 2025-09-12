@@ -30,20 +30,21 @@ const Customers = () => {
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [formData, setFormData] = useState({
     customer: '',
-    date: new Date().toISOString().split('T')[0],
-    invoice: '',
     address: '',
-    
+    city: '',
+    state: '',
+    gstno: ''
   });
   
 
    // Get real bill data from localStorage
    const allBills02 = getSavedBills2().map(bill => ({
     id: bill.id,
-    date: bill.date,
-    invoice: bill.invoice,
     customer: bill.customer,
-    address:bill.address
+    address:bill.address,
+    city:bill.city,
+    state:bill.state,
+    gstno:bill.gstno,
   }));
 
   useEffect(() => {
@@ -68,9 +69,10 @@ const handleEditBill = (bill) => {
   setEditingCustomer(bill);
   setFormData({
     customer: bill.customer,
-    date: bill.date,
-    invoice: bill.invoice,
     address: bill.address,
+    city: bill.city,
+    state: bill.state,
+    gstno: bill.gstno
   });
   setShowForm(true);
 };
@@ -121,9 +123,10 @@ const handleDeleteBill = (billId) => {
     setEditingCustomer(customer);
     setFormData({
       customer: customer.customer,
-      date: customer.date,
-      invoice: customer.invoice,
       address: customer.address,
+      city: customer.city,
+      state: customer.state,
+      gstno: customer.gstno
      
     });
     setShowForm(true);
@@ -166,9 +169,10 @@ const handleDeleteBill = (billId) => {
   setEditingCustomer(null);
   setFormData({
     customer: '',
-    date: new Date().toISOString().split('T')[0],
-    invoice: '',
     address: '',
+    city: '',
+    state: '',
+    gstno: ''
   });
 };
 
@@ -178,10 +182,10 @@ const handleDeleteBill = (billId) => {
     setEditingCustomer(null);
     setFormData({
       customer: '',
-      date: new Date().toISOString().split('T')[0],
-      invoice: '',
       address: '',
-      
+      city: '',
+      state: '',
+      gstno: ''
     });
   };
   
@@ -252,14 +256,7 @@ const handleDeleteBill = (billId) => {
                   placeholder="Enter customer name"
                   required
                 />
-                 <Input
-                  label="Invoice no"
-                  name="invoice"
-                  value={formData.invoice}
-                  onChange={handleFormChange}
-                  placeholder="Enter invoice no"
-                  required
-                />
+                 
                 <Input
                   label=" Address"
                   name="address"
@@ -271,11 +268,29 @@ const handleDeleteBill = (billId) => {
                 />
                 
                 <Input
-                  label="date"
-                  name="date"
-                  value={formData.date}
+                  label=" City"
+                  name="city"
+                  value={formData.city}
                   onChange={handleFormChange}
-                  placeholder="Enter date"
+                  placeholder="Enter city"
+                  required
+                />
+
+                <Input
+                  label="State"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleFormChange}
+                  placeholder="Enter state"
+                  required
+                />
+
+                <Input
+                  label="GST_NO"
+                  name="gstno"
+                  value={formData.gstno}
+                  onChange={handleFormChange}
+                  placeholder="Enter GST_NO"
                   required
                 />
                 
@@ -317,9 +332,10 @@ const handleDeleteBill = (billId) => {
                   <thead>
                     <tr className="bg-gray-50 border-b">
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">invoiceNo</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">State</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GST_NO</th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
@@ -327,9 +343,10 @@ const handleDeleteBill = (billId) => {
                     {filteredData.map((customer) => (
                       <tr key={customer.id}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">{customer.customer}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">{customer.invoice}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">{customer.date}</td>
-                        <td className="px-6 py-4 text-sm text-gray-500">{customer.address}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">{customer.address}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">{customer.city}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">{customer.state}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">{customer.gstno}</td>
                        
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button 

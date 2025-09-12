@@ -12,7 +12,8 @@ const Billing = () => {
   const navigate = useNavigate();
   const [bills, setBills] = useState([]);
   const [selectedBill, setSelectedBill] = useState(null);
-  
+  const [editingBill, setEditingBill] = useState(null);
+
   useEffect(() => {
     if (!isLoggedIn()) {
       navigate('/');
@@ -27,6 +28,8 @@ const Billing = () => {
   const handleBillSaved = () => {
     // Refresh the bills list when a new bill is saved
     setBills(getSavedBills());
+    // Clear edit mode after saving
+    setEditingBill(null);
   };
 
   const handleViewBill = (bill) => {
@@ -54,7 +57,19 @@ const Billing = () => {
       if (selectedBill && selectedBill.id === billId) {
         setSelectedBill(null);
       }
+      // If the deleted bill was being edited, exit edit mode
+      if (editingBill && editingBill.id === billId) {
+        setEditingBill(null);
+      }
     }
+  };
+
+  const handleEditBill = (bill) => {
+    setEditingBill(bill);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingBill(null);
   };
 
   const getStatusColor = (status) => {
@@ -73,36 +88,47 @@ const Billing = () => {
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar />
-      
+
       <div className="flex-1 flex flex-col overflow-hidden">
         <Navbar />
-        
+
         <main className="flex-1 overflow-y-auto p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-semibold text-gray-800">Billing</h1>
             <p className="text-gray-600">Generate and manage bills for your services</p>
           </div>
-          
+
           <div className="mb-8">
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
               <div className="p-4 bg-blue-50 border-b border-blue-100">
-                <h2 className="text-lg font-semibold text-gray-800">Create New Bill</h2>
-                <p className="text-sm text-gray-600">Fill in the details to generate a professional bill</p>
+                <h2 className="text-lg font-semibold text-gray-800">
+                  {editingBill ? 'Edit Bill' : 'Create New Bill'}
+                </h2>
+                <p className="text-sm text-gray-600">
+                  {editingBill 
+                    ? 'Update the bill details below' 
+                    : 'Fill in the details to generate a professional bill'
+                  }
+                </p>
               </div>
-              
+
               <div className="p-6">
-                <BillForm onBillSaved={handleBillSaved} />
+                <BillForm 
+                  onBillSaved={handleBillSaved} 
+                  initialBill={editingBill}
+                  onCancel={handleCancelEdit}
+                />
               </div>
             </div>
           </div>
-          
+
           <div>
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
               <div className="p-4 bg-blue-50 border-b border-blue-100">
                 <h2 className="text-lg font-semibold text-gray-800">Recent Bills</h2>
                 <p className="text-sm text-gray-600">View and manage recently generated bills</p>
               </div>
-              
+
               <div className="p-6">
                 <div className="overflow-x-auto">
                   <table className="min-w-full bg-white">
@@ -125,7 +151,7 @@ const Billing = () => {
                         </tr>
                       ) : (
                         bills.map((bill) => (
-                          <tr key={bill.id}>
+                          <tr key={bill.id} className={editingBill && editingBill.id === bill.id ? 'bg-yellow-50' : ''}>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                               {bill.invoice}
                             </td>
@@ -168,8 +194,19 @@ const Billing = () => {
                                 Download
                               </button>
                               <button 
+                                onClick={() => handleEditBill(bill)}
+                                className={`mr-4 ${
+                                  editingBill && editingBill.id === bill.id
+                                    ? 'text-orange-600 hover:text-orange-900'
+                                    : 'text-green-600 hover:text-green-900'
+                                }`}
+                              >
+                                {editingBill && editingBill.id === bill.id ? 'Editing...' : 'Edit'}
+                              </button>
+                              <button 
                                 onClick={() => handleDeleteBill(bill.id)}
                                 className="text-red-600 hover:text-red-900"
+                                disabled={editingBill && editingBill.id === bill.id}
                               >
                                 Delete
                               </button>
@@ -185,7 +222,7 @@ const Billing = () => {
           </div>
         </main>
       </div>
-      
+
       {selectedBill && (
         <BillViewer
           bill={selectedBill}

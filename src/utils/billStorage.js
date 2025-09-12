@@ -6,7 +6,7 @@
  * @property {string} address - Address name
  * @property {string} city - City name
  * @property {string} state - State name
- * @property {string} zip - Zip name
+ * @property {string} gstno - GST_NO
  * @property {string} invoice - Invoice number from form
  * @property {string} date - Service date
  * @property {Array<{sno: string, name: string, hsn: string, units: string, price: string, gst: string, cgst: string, sgst: string, totalAmount: string , quantityType:string}>} additionalItems - Additional line items
@@ -43,6 +43,35 @@ export const saveBill = (billData) => {
 };
 
 /**
+ * Update an existing bill in local storage
+ * @param {string} id - Bill ID to update
+ * @param {Object} billData - Updated bill data
+ * @returns {SavedBill} The updated bill
+ */
+export const updateBill = (id, billData) => {
+  const bills = getSavedBills();
+  const billIndex = bills.findIndex(bill => bill.id === id);
+  
+  if (billIndex === -1) {
+    throw new Error('Bill not found');
+  }
+
+  const existingBill = bills[billIndex];
+  const updatedBill = {
+    ...existingBill,
+    ...billData,
+    id: existingBill.id, // Keep original ID
+    invoiceNumber: existingBill.invoiceNumber, // Keep original invoice number
+    createdAt: existingBill.createdAt, // Keep original creation date
+    updatedAt: new Date().toISOString() // Add update timestamp
+  };
+
+  bills[billIndex] = updatedBill;
+  localStorage.setItem(BILLS_STORAGE_KEY, JSON.stringify(bills));
+  return updatedBill;
+};
+
+/**
  * Get all saved bills from local storage
  * @returns {Array<SavedBill>} Array of saved bills
  */
@@ -71,6 +100,7 @@ export const updateBillStatus = (id, status) => {
   const billIndex = bills.findIndex(bill => bill.id === id);
   if (billIndex !== -1) {
     bills[billIndex].status = status;
+    bills[billIndex].updatedAt = new Date().toISOString();
     localStorage.setItem(BILLS_STORAGE_KEY, JSON.stringify(bills));
   }
 };

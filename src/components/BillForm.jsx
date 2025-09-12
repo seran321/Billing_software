@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { getServiceTypes, getCustomers } from "../utils/ChartData.js";
-import { saveBill } from "../utils/billStorage.js";
+import { getSavedCustomers } from "../utils/customerStorage.js";
+import { saveBill, updateBill } from "../utils/billStorage.js";
 import { saveBill2 } from "../utils/billstorage2.js";
 import { generateBillPDF } from "../utils/pdfGenerator.js";
 import { assets } from "../assets/assets";
@@ -9,8 +10,10 @@ import { assets } from "../assets/assets";
  * Bill creation form component
  * @param {Object} props - Component props
  * @param {Function} [props.onBillSaved] - Optional callback when a bill is saved
+ * @param {Object} [props.initialBill] - Bill data for editing
+ * @param {Function} [props.onCancel] - Optional callback when editing is cancelled
  */
-const BillForm = ({ onBillSaved }) => {
+const BillForm = ({ onBillSaved, initialBill, onCancel }) => {
   const printInvoice = () => {
     window.print();
   };
@@ -21,7 +24,7 @@ const BillForm = ({ onBillSaved }) => {
     address: "",
     city: "",
     state: "",
-    zip: "",
+    gstno: "",
     invoice: "",
     date: new Date().toISOString().split("T")[0],
     additionalItems: [],
@@ -42,13 +45,77 @@ const BillForm = ({ onBillSaved }) => {
   });
 
   const [previewMode, setPreviewMode] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [customerSuggestions, setCustomerSuggestions] = useState([]);
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [savedCustomers, setSavedCustomers] = useState([]);
 
   const customers = getCustomers();
   const serviceTypes = getServiceTypes();
 
+  // Load saved customers on component mount
+  useEffect(() => {
+    setSavedCustomers(getSavedCustomers());
+  }, []);
+
+  // Effect to populate form when editing
+  useEffect(() => {
+    if (initialBill) {
+      setBillData({
+        billtype: initialBill.billtype || "",
+        customer: initialBill.customer || "",
+        address: initialBill.address || "",
+        city: initialBill.city || "",
+        state: initialBill.state || "",
+        gstno: initialBill.gstno || "",
+        invoice: initialBill.invoice || "",
+        date: initialBill.date || new Date().toISOString().split("T")[0],
+        additionalItems: initialBill.additionalItems || [],
+        notes: initialBill.notes || "",
+      });
+      setIsEditing(true);
+    } else {
+      setIsEditing(false);
+    }
+  }, [initialBill]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setBillData((prev) => ({ ...prev, [name]: value }));
+    
+    if (name === 'customer') {
+      // Handle customer name input with auto-suggestions
+      setBillData((prev) => ({ ...prev, [name]: value }));
+      
+      if (value.trim()) {
+        // Find matching customers
+        const matches = savedCustomers.filter(customer => 
+          customer.customer.toLowerCase().includes(value.toLowerCase())
+        );
+        
+        setCustomerSuggestions(matches);
+        setShowCustomerDropdown(matches.length > 0);
+      } else {
+        setCustomerSuggestions([]);
+        setShowCustomerDropdown(false);
+      }
+    } else {
+      setBillData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  // Handle customer selection from dropdown
+  const handleCustomerSelect = (selectedCustomer) => {
+    setBillData((prev) => ({
+      ...prev,
+      customer: selectedCustomer.customer,
+      address: selectedCustomer.address,
+      city: selectedCustomer.city,
+      state: selectedCustomer.state,
+      gstno: selectedCustomer.gstno || prev.gstno // Use GST number as zip if available
+    }));
+    
+    setShowCustomerDropdown(false);
+    setCustomerSuggestions([]);
   };
 
   // Calculate total amount for current item based on input values
@@ -237,14 +304,13 @@ const BillForm = ({ onBillSaved }) => {
   const handleExportPDF = () => {
     const totals = calculateBillTotals();
 
-    // Save the bill to localStorage
-    const savedBill = saveBill({
+    const billToSave = {
       billtype: billData.billtype,
       customer: billData.customer,
       address: billData.address,
       city: billData.city,
       state: billData.state,
-      zip: billData.zip,
+      gstno: billData.gstno,
       invoice: billData.invoice,
       date: billData.date,
       additionalItems: billData.additionalItems,
@@ -252,24 +318,20 @@ const BillForm = ({ onBillSaved }) => {
       subtotal: totals.subtotal,
       taxAmount: totals.tax,
       total: totals.total,
-    });
+    };
 
-    // Save the bill to localStorage 2
-    const savedBill2 = saveBill2({
-      billtype: billData.billtype,
-      customer: billData.customer,
-      address: billData.address,
-      city: billData.city,
-      state: billData.state,
-      zip: billData.zip,
-      invoice: billData.invoice,
-      date: billData.date,
-      additionalItems: billData.additionalItems,
-      notes: billData.notes,
-      subtotal: totals.subtotal,
-      taxAmount: totals.tax,
-      total: totals.total,
-    });
+    let savedBill;
+
+    if (isEditing && initialBill) {
+      // Update existing bill
+      savedBill = updateBill(initialBill.id, billToSave);
+    } else {
+      // Save new bill
+      savedBill = saveBill(billToSave);
+      
+      // Save the bill to localStorage 2
+      saveBill2(billToSave);
+    }
 
     // Generate and download PDF
     generateBillPDF(savedBill);
@@ -281,7 +343,7 @@ const BillForm = ({ onBillSaved }) => {
       address: "",
       city: "",
       state: "",
-      zip: "",
+      gstno: "",
       invoice: "",
       date: new Date().toISOString().split("T")[0],
       additionalItems: [],
@@ -289,13 +351,37 @@ const BillForm = ({ onBillSaved }) => {
     });
 
     setPreviewMode(false);
+    setIsEditing(false);
 
     // Notify parent component that a bill was saved
     if (onBillSaved) {
       onBillSaved();
     }
 
-    alert("Bill saved and PDF generated successfully!");
+    alert(`Bill ${isEditing ? 'updated' : 'saved'} and PDF generated successfully!`);
+  };
+
+  const handleCancel = () => {
+    // Reset form
+    setBillData({
+      billtype: "",
+      customer: "",
+      address: "",
+      city: "",
+      state: "",
+      gstno: "",
+      invoice: "",
+      date: new Date().toISOString().split("T")[0],
+      additionalItems: [],
+      notes: "",
+    });
+    
+    setIsEditing(false);
+    setPreviewMode(false);
+    
+    if (onCancel) {
+      onCancel();
+    }
   };
 
   const renderBillPreview = () => {
@@ -459,7 +545,13 @@ const BillForm = ({ onBillSaved }) => {
   const renderBillForm = () => {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md">
-        {/* ... keep existing code (customer form fields) */}
+        {isEditing && (
+          <div className="mb-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+            <p className="font-medium">Editing Bill: {billData.invoice}</p>
+            <p className="text-sm">Make your changes and click "Update Bill" to save.</p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-gray-700 font-medium mb-2">
@@ -481,16 +573,40 @@ const BillForm = ({ onBillSaved }) => {
             <label className="block text-gray-700 font-medium mb-2">
               Customer
             </label>
-            <input
-              name="customer"
-              value={billData.customer}
-              onChange={handleInputChange}
-              id="customer"
-              type="text"
-              required
-              className="px-4 py-2 border border-blue-100 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none w-full"
-              placeholder="Enter customer name"
-            />
+            <div className="relative">
+              <input
+                name="customer"
+                value={billData.customer}
+                onChange={handleInputChange}
+                id="customer"
+                type="text"
+                required
+                className="px-4 py-2 border border-blue-100 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none w-full"
+                placeholder="Enter customer name"
+                autoComplete="off"
+              />
+              
+              {/* Customer suggestions dropdown */}
+              {showCustomerDropdown && customerSuggestions.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {customerSuggestions.map((customer, index) => (
+                    <div
+                      key={customer.id}
+                      onClick={() => handleCustomerSelect(customer)}
+                      className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="font-medium text-gray-900">{customer.customer}</div>
+                      <div className="text-sm text-gray-600">
+                        {customer.address}, {customer.city}, {customer.state}
+                      </div>
+                      {customer.gstno && (
+                        <div className="text-xs text-gray-500">GST: {customer.gstno}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="md:col-span-2">
@@ -537,12 +653,12 @@ const BillForm = ({ onBillSaved }) => {
 
           <div>
             <label className="block text-gray-700 font-medium mb-2">
-              Zip_code
+              GST_NO
             </label>
             <input
               type="text"
-              name="zip"
-              value={billData.zip}
+              name="gstno"
+              value={billData.gstno}
               onChange={handleInputChange}
               className="px-4 py-2 border border-blue-100 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none w-full"
               placeholder="Enter the Zip_code"
@@ -888,7 +1004,7 @@ const BillForm = ({ onBillSaved }) => {
               // Update only if changed
               if (newText !== text) {
                 e.target.value = newText;
-                handleNewItemChange(e);
+                handleInputChange(e);
               }
             }}
           ></textarea>
@@ -899,7 +1015,7 @@ const BillForm = ({ onBillSaved }) => {
             <h3 className="text-lg font-semibold">
               Bill Total: ₹{calculateBillTotals().total}
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <button
                 type="button"
                 onClick={() => setPreviewMode(true)}
@@ -907,12 +1023,23 @@ const BillForm = ({ onBillSaved }) => {
               >
                 Preview
               </button>
+              
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              )}
+              
               <button
                 type="button"
                 onClick={handleExportPDF}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                Generate PDF
+                {isEditing ? 'Update Bill' : 'Generate PDF'}
               </button>
             </div>
           </div>

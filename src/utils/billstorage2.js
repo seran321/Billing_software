@@ -5,8 +5,10 @@
  * @property {string} customer - Customer name
  * @property {string} address - Address name
 
- * @property {string} invoice - Invoice number from form
- * @property {string} date - Service date
+ * @property {string} city - City name
+ * @property {string} state - State name
+ * @property {string} gstno - GST_NO
+  * @property {string} invoice - Invoice number from form
 
  * @property {string} createdAt - Creation timestamp
 
