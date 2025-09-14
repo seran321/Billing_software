@@ -85,11 +85,12 @@ export const generateBillPDF = (bill) => {
   const pdf = new jsPDF();
   pdf.setFont('helvetica');
 
- // Header logo
+  // Header logo
   if (assets.logo) {
-    pdf.addImage(assets.logo, 'PNG', 0, 0, 210,40);  
- }
-let y = 30;
+    pdf.addImage(assets.logo, 'PNG', 0, 0, 210,40);
+  }
+
+  let y = 30;
 
   // Title
   pdf.setFontSize(16);
@@ -112,7 +113,12 @@ let y = 30;
     y += 5;
   });
 
-  pdf.text(`${bill.city}, ${bill.state} - ${bill.zip}`, 20, y);
+  pdf.text(`${bill.city}, ${bill.state} `, 20, y);
+
+  pdf.text('GST_NO:', 20, y + 5);
+  pdf.text(bill.gstno || 'N/A',37, y + 5);
+
+  y += 5;
 
   // Invoice info (right side)
   const invoiceY = y - (addressLines.length + 2) * 5;
@@ -151,7 +157,7 @@ let y = 30;
     const rowHeight = Math.max(10, getTextHeight(descriptionWrapped) + 4);
 
     // Page break check
-    if (y + rowHeight > 230) {
+    if (y + rowHeight > 220) {
       pdf.addPage();
       y = drawTableHeader(pdf, columns, 20);
     }
@@ -265,7 +271,7 @@ pdf.text('For VR TECH HVAC Solutions:', 150, signatureY);
 
 // Footer Image
 if (assets.footer) {
-  pdf.addImage(assets.footer, 'PNG', 0, footerTopY, 210, 30);
+  pdf.addImage(assets.footer, 'PNG', 0, 268,210,30);
 }
 
   // Save File

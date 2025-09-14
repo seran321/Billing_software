@@ -65,7 +65,8 @@ const BillViewer = ({ bill, onClose, onDownload }) => {
             <div className="whitespace-pre-line">
                     {bill.address}
             </div>
-            <p>{bill.city}, {bill.state} - {}</p>
+            <p>{bill.city}, {bill.state}  </p>
+            <p><strong> GST_NO:</strong> {bill.gstno}</p>
         </div>
         <div className='px-12'>
             <p><strong>INVOICE NO:</strong> {bill.invoice}</p>

@@ -103,7 +103,7 @@ const BillForm = ({ onBillSaved, initialBill, onCancel }) => {
           address: bill.address,
           city: bill.city,
           state: bill.state,
-          gstno: bill.zip || bill.gstno, // Use zip as gstno or gstno field
+          gstno: bill.gstno, 
           source: 'bill'
         }));
         
@@ -136,7 +136,7 @@ const BillForm = ({ onBillSaved, initialBill, onCancel }) => {
       address: selectedCustomer.address,
       city: selectedCustomer.city,
       state: selectedCustomer.state,
-      gstno: selectedCustomer.gstno || selectedCustomer.zip || prev.zip // Use GST number as zip if available
+      gstno: selectedCustomer.gstno 
     }));
     
     setShowCustomerDropdown(false);
@@ -443,8 +443,9 @@ const BillForm = ({ onBillSaved, initialBill, onCancel }) => {
                   <p>{billData.customer}</p>
                   <div className="whitespace-pre-line">{billData.address}</div>
                   <p>
-                    {billData.city}, {billData.state} - {billData.zip}
+                    {billData.city}, {billData.state} 
                   </p>
+                  <p><strong> GST_NO:</strong> {billData.gstno}</p>
                 </div>
                 <div className="px-12">
                   <p>
