@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { getServiceTypes, getCustomers } from "../utils/ChartData.js";
 import { getSavedCustomers } from "../utils/customerStorage.js";
+import { getSavedBills2 } from "../utils/billstorage2.js";
 import { saveBill, updateBill } from "../utils/billStorage.js";
 import { saveBill2 } from "../utils/billstorage2.js";
 import { generateBillPDF } from "../utils/pdfGenerator.js";
@@ -49,6 +50,7 @@ const BillForm = ({ onBillSaved, initialBill, onCancel }) => {
   const [customerSuggestions, setCustomerSuggestions] = useState([]);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [savedCustomers, setSavedCustomers] = useState([]);
+  const [savedBills, setSavedBills] = useState([]);
 
   const customers = getCustomers();
   const serviceTypes = getServiceTypes();
@@ -56,6 +58,7 @@ const BillForm = ({ onBillSaved, initialBill, onCancel }) => {
   // Load saved customers on component mount
   useEffect(() => {
     setSavedCustomers(getSavedCustomers());
+    setSavedBills(getSavedBills2());
   }, []);
 
   // Effect to populate form when editing
@@ -87,13 +90,35 @@ const BillForm = ({ onBillSaved, initialBill, onCancel }) => {
       setBillData((prev) => ({ ...prev, [name]: value }));
       
       if (value.trim()) {
-        // Find matching customers
-        const matches = savedCustomers.filter(customer => 
+        // Find matching customers from both customer storage and bill storage
+        const customerMatches = savedCustomers.filter(customer => 
           customer.customer.toLowerCase().includes(value.toLowerCase())
         );
         
-        setCustomerSuggestions(matches);
-        setShowCustomerDropdown(matches.length > 0);
+        const billMatches = savedBills.filter(bill => 
+          bill.customer.toLowerCase().includes(value.toLowerCase())
+        ).map(bill => ({
+          id: bill.id,
+          customer: bill.customer,
+          address: bill.address,
+          city: bill.city,
+          state: bill.state,
+          gstno: bill.zip || bill.gstno, // Use zip as gstno or gstno field
+          source: 'bill'
+        }));
+        
+        // Combine and remove duplicates based on customer name, address, and city
+        const allMatches = [...customerMatches, ...billMatches];
+        const uniqueMatches = allMatches.filter((match, index, self) => 
+          index === self.findIndex(m => 
+            m.customer.toLowerCase() === match.customer.toLowerCase() &&
+            m.address.toLowerCase() === match.address.toLowerCase() &&
+            m.city.toLowerCase() === match.city.toLowerCase()
+          )
+        );
+        
+        setCustomerSuggestions(uniqueMatches);
+        setShowCustomerDropdown(uniqueMatches.length > 0);
       } else {
         setCustomerSuggestions([]);
         setShowCustomerDropdown(false);
@@ -111,7 +136,7 @@ const BillForm = ({ onBillSaved, initialBill, onCancel }) => {
       address: selectedCustomer.address,
       city: selectedCustomer.city,
       state: selectedCustomer.state,
-      gstno: selectedCustomer.gstno || prev.gstno // Use GST number as zip if available
+      gstno: selectedCustomer.gstno || selectedCustomer.zip || prev.zip // Use GST number as zip if available
     }));
     
     setShowCustomerDropdown(false);
@@ -599,8 +624,11 @@ const BillForm = ({ onBillSaved, initialBill, onCancel }) => {
                       <div className="text-sm text-gray-600">
                         {customer.address}, {customer.city}, {customer.state}
                       </div>
-                      {customer.gstno && (
+                      {(customer.gstno) && (
                         <div className="text-xs text-gray-500">GST: {customer.gstno}</div>
+                      )}
+                      {customer.source === 'bill' && (
+                        <div className="text-xs text-blue-500">From Bill Data</div>
                       )}
                     </div>
                   ))}
@@ -661,7 +689,7 @@ const BillForm = ({ onBillSaved, initialBill, onCancel }) => {
               value={billData.gstno}
               onChange={handleInputChange}
               className="px-4 py-2 border border-blue-100 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none w-full"
-              placeholder="Enter the Zip_code"
+              placeholder="Enter the gst no"
             />
           </div>
 

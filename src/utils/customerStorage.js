@@ -15,23 +15,34 @@
 const CUSTOMERS_STORAGE_KEY = 'saved_customers';
 
 /**
- * Save a new customer to local storage
- * @param {Object} customerData - Customer data without id and createdAt
- * @returns {SavedCustomer} The saved customer with generated fields
- */
-export const saveCustomer = (customerData) => {
-  const customers = getSavedCustomers();
+  * Save a new customer to local storage
+  * @param {Object} customerData - Customer data without id and createdAt
+  * @returns {SavedCustomer} The saved customer with generated fields
+  */
+ export const saveCustomer = (customerData) => {
+   const customers = getSavedCustomers();
   
-  const newCustomer = {
-    ...customerData,
-    id: Date.now().toString(),
-    createdAt: new Date().toISOString()
-  };
+  // Check for duplicate customer (same name, address, and city)
+  const isDuplicate = customers.some(customer => 
+    customer.customer.toLowerCase() === customerData.customer.toLowerCase() &&
+    customer.address.toLowerCase() === customerData.address.toLowerCase() &&
+    customer.city.toLowerCase() === customerData.city.toLowerCase()
+  );
+  
+  if (isDuplicate) {
+    throw new Error('Customer with same name, address, and city already exists');
+  }
+   
+   const newCustomer = {
+     ...customerData,
+     id: Date.now().toString(),
+     createdAt: new Date().toISOString()
+   };
 
-  customers.push(newCustomer);
-  localStorage.setItem(CUSTOMERS_STORAGE_KEY, JSON.stringify(customers));
-  return newCustomer;
-};
+   customers.push(newCustomer);
+   localStorage.setItem(CUSTOMERS_STORAGE_KEY, JSON.stringify(customers));
+   return newCustomer;
+ };
 
 /**
  * Get all saved customers from local storage

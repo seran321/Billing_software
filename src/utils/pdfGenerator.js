@@ -85,12 +85,11 @@ export const generateBillPDF = (bill) => {
   const pdf = new jsPDF();
   pdf.setFont('helvetica');
 
-  // Header logo
+ // Header logo
   if (assets.logo) {
-    pdf.addImage(assets.logo, 'PNG', 20, 0, 170, 40);
-  }
-
-  let y = 30;
+    pdf.addImage(assets.logo, 'PNG', 0, 0, 210,40);  
+ }
+let y = 30;
 
   // Title
   pdf.setFontSize(16);
@@ -266,7 +265,7 @@ pdf.text('For VR TECH HVAC Solutions:', 150, signatureY);
 
 // Footer Image
 if (assets.footer) {
-  pdf.addImage(assets.footer, 'PNG', 20, footerTopY, 170, 30);
+  pdf.addImage(assets.footer, 'PNG', 0, footerTopY, 210, 30);
 }
 
   // Save File

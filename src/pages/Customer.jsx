@@ -88,6 +88,8 @@ const handleDeleteBill = (billId) => {
 
 
 
+
+
   
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -144,37 +146,41 @@ const handleDeleteBill = (billId) => {
 
   
   
-  
   const handleFormSubmit = (e) => {
-  e.preventDefault();
+   e.preventDefault();
 
-  if (editingCustomer && editingCustomer.invoiceNumber) {
-    // It's a bill, not a customer (bills have invoiceNumber, customers don't)
-    const updatedBills = bills.map((bill) =>
-      bill.id === editingCustomer.id ? { ...bill, ...formData } : bill
-    );
-    localStorage.setItem('saved_bills02', JSON.stringify(updatedBills));
-    loadBills();
-  } else if (editingCustomer) {
-    // Update customer
-    updateCustomer(editingCustomer.id, formData);
-    loadCustomers();
-  } else {
-    // New customer
-    saveCustomer(formData);
-    loadCustomers();
+  try {
+     if (editingCustomer && editingCustomer.invoiceNumber) {
+       // It's a bill, not a customer (bills have invoiceNumber, customers don't)
+       const updatedBills = bills.map((bill) =>
+         bill.id === editingCustomer.id ? { ...bill, ...formData } : bill
+       );
+       localStorage.setItem('saved_bills02', JSON.stringify(updatedBills));
+       loadBills();
+     } else if (editingCustomer) {
+       // Update customer
+       updateCustomer(editingCustomer.id, formData);
+       loadCustomers();
+     } else {
+       // New customer
+       saveCustomer(formData);
+       loadCustomers();
+     }
+
+     setShowForm(false);
+     setEditingCustomer(null);
+     setFormData({
+       customer: '',
+       address: '',
+       city: '',
+       state: '',
+       gstno: ''
+     });
+  } catch (error) {
+    alert(error.message);
   }
+ };
 
-  setShowForm(false);
-  setEditingCustomer(null);
-  setFormData({
-    customer: '',
-    address: '',
-    city: '',
-    state: '',
-    gstno: ''
-  });
-};
 
 
   const handleCancelForm = () => {
@@ -291,7 +297,7 @@ const handleDeleteBill = (billId) => {
                   value={formData.gstno}
                   onChange={handleFormChange}
                   placeholder="Enter GST_NO"
-                  required
+                
                 />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2  gap-4">
