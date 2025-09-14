@@ -1,17 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCurrentUser, logoutUser } from '../utils/authUtils';
-import { Menu, X, Search } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { assets } from '../assets/assets';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const currentUser = getCurrentUser();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [showSearchResults, setShowSearchResults] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   const handleLogout = () => {
     logoutUser();
@@ -19,45 +15,8 @@ const Navbar = () => {
     setIsMobileMenuOpen(false);
   };
 
-  // Universal search function
-  const handleSearch = (e) => {
-    const term = e.target.value;
-    setSearchTerm(term);
-    
-    if (term.length > 2) {
-      // Mock search data - in real app, this would search across all data
-      const mockResults = [
-        { type: 'Customer', name: 'Johnson Residence', url: '/customers' },
-        { type: 'Service', name: 'AC Installation', url: '/services' },
-        { type: 'Bill', name: 'INV-2023-001', url: '/billing' },
-        { type: 'Report', name: 'Monthly Revenue', url: '/reports' },
-      ].filter(item => 
-        item.name.toLowerCase().includes(term.toLowerCase())
-      );
-      
-      setSearchResults(mockResults);
-      setShowSearchResults(true);
-    } else {
-      setSearchResults([]);
-      setShowSearchResults(false);
-    }
-  };
-
-  const handleSearchResultClick = (url) => {
-    setShowSearchResults(false);
-    setSearchTerm('');
-    setIsMobileSearchOpen(false);
-    navigate(url);
-  };
-
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
-    setIsMobileSearchOpen(false);
-  };
-
-  const toggleMobileSearch = () => {
-    setIsMobileSearchOpen(!isMobileSearchOpen);
-    setIsMobileMenuOpen(false);
   };
 
   return (
@@ -79,43 +38,6 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
-            {/* Desktop Search */}
-            <div className="relative">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search anything..."
-                  value={searchTerm}
-                  onChange={handleSearch}
-                  onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
-                  className="w-64 px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              </div>
-              
-              {/* Search Results Dropdown */}
-              {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                  {searchResults.map((result, index) => (
-                    <div
-                      key={index}
-                      onClick={() => handleSearchResultClick(result.url)}
-                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                    >
-                      <div className="flex items-center">
-                        <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded mr-2">
-                          {result.type}
-                        </span>
-                        <span className="text-sm text-gray-700">{result.name}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-           
-
             {/* Desktop User Menu */}
             {currentUser && (
               <>
@@ -144,14 +66,6 @@ const Navbar = () => {
 
           {/* Mobile buttons */}
           <div className="md:hidden flex items-center space-x-2">
-            {/* Mobile Search Button */}
-            <button
-              onClick={toggleMobileSearch}
-              className="p-2 text-gray-600 hover:text-blue-600 focus:outline-none"
-            >
-              <Search className="w-6 h-6" />
-            </button>
-
             {/* Mobile Menu Button */}
             <button
               onClick={toggleMobileMenu}
@@ -161,43 +75,6 @@ const Navbar = () => {
             </button>
           </div>
         </div>
-
-        {/* Mobile Search */}
-        {isMobileSearchOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search anything..."
-                value={searchTerm}
-                onChange={handleSearch}
-                onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
-                className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-              />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              
-              {/* Mobile Search Results */}
-              {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                  {searchResults.map((result, index) => (
-                    <div
-                      key={index}
-                      onClick={() => handleSearchResultClick(result.url)}
-                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                    >
-                      <div className="flex items-center">
-                        <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded mr-2">
-                          {result.type}
-                        </span>
-                        <span className="text-sm text-gray-700">{result.name}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
